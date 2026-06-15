@@ -1,0 +1,110 @@
+name: Perf Matrix
+
+# Manually-triggered cross-engine performance benchmark. Runs the pristine Wheels
+# bench app on each CFML engine, captures cold + warm latency / throughput, and
+# publishes the per-engine output and an aggregated summary as build artifacts.
+#
+# Engines that can't yet serve the app (e.g. an engine-specific framework gap)
+# are recorded as BLOCKED rather than failing the run, so the matrix stays useful
+# as fixes land.
+
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: "Warm iterations per endpoint"
+        required: false
+        default: "200"
+      rustcfml_url:
+        description: "URL to a linux-x64 rustcfml binary (leave blank to skip the rustcfml engine)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    name: "bench (${{ matrix.engine }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [lucee7, boxlang, adobe2023, rustcfml]
+    env:
+      BENCH_ITER: ${{ github.event.inputs.iterations }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        if: matrix.engine != 'rustcfml'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install CommandBox
+        if: matrix.engine != 'rustcfml'
+        uses: Ortus-Solutions/setup-commandbox@v2.0.1
+
+      - name: Download rustcfml binary
+        if: matrix.engine == 'rustcfml'
+        env:
+          RUSTCFML_URL: ${{ github.event.inputs.rustcfml_url }}
+        run: |
+          if [ -z "$RUSTCFML_URL" ]; then
+            echo "No rustcfml_url provided — skipping rustcfml." >&2
+            exit 0
+          fi
+          curl -fsSL "$RUSTCFML_URL" -o /tmp/rustcfml
+          chmod +x /tmp/rustcfml
+          echo "RUSTCFML_BIN=/tmp/rustcfml" >> "$GITHUB_ENV"
+
+      - name: Run benchmark (${{ matrix.engine }})
+        continue-on-error: true
+        run: bash bench/run-matrix.sh ${{ matrix.engine }}
+
+      - name: Upload engine results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-${{ matrix.engine }}
+          path: |
+            results/
+          if-no-files-found: warn
+
+  summary:
+    name: Aggregate summary
+    needs: bench
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: all-results
+          pattern: perf-*
+          merge-multiple: true
+
+      - name: Build combined summary
+        run: |
+          {
+            echo "# Cross-engine perf matrix"
+            echo
+            echo "_Run: ${{ github.run_id }} • $(date -u +%Y-%m-%dT%H:%M:%SZ)_"
+            echo
+            for f in all-results/*.txt; do
+              [ -f "$f" ] || continue
+              echo "## $(basename "$f" .txt)"
+              echo '```'
+              cat "$f"
+              echo '```'
+              echo
+            done
+          } > all-results/SUMMARY.md
+          cat all-results/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload combined summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-summary
+          path: all-results/SUMMARY.md

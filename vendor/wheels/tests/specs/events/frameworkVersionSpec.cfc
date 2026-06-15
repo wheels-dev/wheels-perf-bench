@@ -17,7 +17,7 @@ component extends="wheels.WheelsTest" {
 			});
 
 			it("does not expose the literal unreplaced build placeholder at runtime", () => {
-				expect(application.wheels.version).notToBe("4.0.3");
+				expect(application.wheels.version).notToBe("@build.version@");
 			});
 
 			it("caches a BuildInfo instance on application.wheels.buildInfo at boot", () => {

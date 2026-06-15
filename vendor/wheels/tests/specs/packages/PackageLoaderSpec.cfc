@@ -321,7 +321,7 @@ component extends="wheels.WheelsTest" {
 					var loader = new wheels.PackageLoader(
 						vendorPath = fixturesPath,
 						componentPrefix = componentPrefix,
-						wheelsVersion = "4.0.3"
+						wheelsVersion = "@build.version@"
 					);
 					var pkgs = loader.getPackages();
 

@@ -25,12 +25,9 @@ component output="false" {
 
 	// If a plugin has a jar or class file, automatically add the mapping to this.javasettings.
 	this.wheels.pluginDir = this.appDir & "../plugins";
-	this.wheels.pluginFolders = DirectoryList(
-		this.wheels.pluginDir,
-		"true",
-		"path",
-		"*.class|*.jar|*.java"
-	);
+	this.wheels.pluginFolders = DirectoryExists(this.wheels.pluginDir)
+		? DirectoryList(this.wheels.pluginDir, "true", "path", "*.class|*.jar|*.java")
+		: [];
 
 	for (this.wheels.folder in this.wheels.pluginFolders) {
 		if (!StructKeyExists(this, "javaSettings")) {

@@ -98,6 +98,40 @@ The DB is pre-seeded, so no migrator run is required. If `this.datasources` reso
 endpoint trips, that's exactly the kind of gap worth a cross-engine test case — the workload is
 intentionally minimal and stock so failures point at the engine, not the app.
 
+## Run the whole matrix
+
+`bench/run-matrix.sh` starts each engine, benchmarks it, and writes per-engine output to
+`results/<engine>.txt` plus an aggregated `results/SUMMARY.md`:
+
+```bash
+# Lucee + RustCFML (the engines that serve cleanly today)
+RUSTCFML_BIN=/path/to/rustcfml BENCH_ITER=200 bench/run-matrix.sh lucee7 rustcfml
+
+# attempt all four (BoxLang/Adobe are recorded as BLOCKED until their fixes land)
+RUSTCFML_BIN=/path/to/rustcfml bench/run-matrix.sh lucee7 boxlang adobe2023 rustcfml
+```
+
+Engine sourcing: `lucee7` / `boxlang` / `adobe2023` are provisioned via **CommandBox**
+(`box` on PATH); `rustcfml` uses the binary at `RUSTCFML_BIN`. Each runs the same `bench/bench.sh`,
+so the numbers are directly comparable. An engine that can't serve the app is logged as `BLOCKED`
+(with the HTTP status) rather than aborting the run.
+
+### Engine status
+
+| Engine | Serves the app? | Notes |
+|---|---|---|
+| Lucee 7 | ✅ | reference JVM engine |
+| RustCFML | ✅ | native Rust; pristine Wheels runs full ORM |
+| BoxLang | ⚠️ route loading fixed; live request path being hardened | stricter null handling than Lucee/Adobe — see the cross-engine null-safety work |
+| Adobe 2023 | ⚠️ | rejects the Lucee-style `this.datasources {class, connectionString}` shape; needs an Adobe-native datasource |
+
+### CI
+
+`.github/workflows/perf-matrix.yml` runs the matrix on demand (**Actions → Perf Matrix → Run
+workflow**). It benchmarks each engine on a clean runner, records BLOCKED engines without failing
+the run, and publishes the per-engine output and a combined `SUMMARY.md` as build artifacts (and to
+the job summary). Provide a `rustcfml_url` (a linux-x64 binary) to include RustCFML.
+
 ## Interpreting results
 
 - **COLD ≫ WARM** is expected and is mostly the engine's CFML compiler (parse + bytecode emit),

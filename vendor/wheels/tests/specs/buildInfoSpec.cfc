@@ -22,7 +22,7 @@ component extends="wheels.WheelsTest" {
 				});
 
 				it("returns 0.0.0-dev when version is explicitly the unsubstituted placeholder", () => {
-					var bi = new wheels.BuildInfo({version: "4.0.3"});
+					var bi = new wheels.BuildInfo({version: "@build.version@"});
 					expect(bi.version()).toBe("0.0.0-dev");
 				});
 
@@ -39,9 +39,9 @@ component extends="wheels.WheelsTest" {
 					expect(new wheels.BuildInfo({version: "4.0.0-SNAPSHOT+1628"}).isDev()).toBeFalse();
 				});
 
-				it("source contains the 4.0.3 sentinel exactly once (regression guard)", () => {
+				it("source contains the @build.version@ sentinel exactly once (regression guard)", () => {
 					// The release pipeline (tools/build/scripts/prepare-core.sh) does a
-					// GLOBAL `sed s/4.0.3/<version>/g` over BuildInfo.cfc at
+					// GLOBAL `sed s/@build.version@/<version>/g` over BuildInfo.cfc at
 					// artifact-construction time. If the sentinel appears anywhere
 					// other than the `version:` field of init()'s `variables.info`
 					// struct — say, inside isDev()'s equality comparison — that
@@ -51,7 +51,7 @@ component extends="wheels.WheelsTest" {
 					// literal occurrence, no more.
 					//
 					// If this fails, you almost certainly added a comparison like
-					//     return variables.info.version == "4.0.3";
+					//     return variables.info.version == "@build.version@";
 					// somewhere. Use the prefix/suffix structural check that
 					// $blankIfPlaceholder() uses instead.
 					var src = fileRead(expandPath("/wheels/BuildInfo.cfc"));

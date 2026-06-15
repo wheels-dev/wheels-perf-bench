@@ -22,16 +22,16 @@ component {
 
 	public function init(struct overrides = {}) {
 		variables.info = {
-			version:        "4.0.3",
-			buildNumber:    "55",
-			branch:         "main",
-			commitSha:      "f0bdd141390dee16d3fb6b78ead4ed77b146b8fa",
-			commitShortSha: "f0bdd14",
-			commitSubject:  "Merge pull request ##2892 from wheels-dev/release/4.0.3-to-main",
-			builtAt:        "2026-06-10T04:22:59Z",
-			runId:          "27253015532",
-			runUrl:         "https://github.com/wheels-dev/wheels/actions/runs/27253015532",
-			repository:     "wheels-dev/wheels"
+			version:        "@build.version@",
+			buildNumber:    "@build.number@",
+			branch:         "@build.branch@",
+			commitSha:      "@build.commit@",
+			commitShortSha: "@build.commitShort@",
+			commitSubject:  "@build.commitSubject@",
+			builtAt:        "@build.timestamp@",
+			runId:          "@build.runId@",
+			runUrl:         "@build.runUrl@",
+			repository:     "@build.repository@"
 		};
 		for (var key in arguments.overrides) {
 			variables.info[key] = arguments.overrides[key];

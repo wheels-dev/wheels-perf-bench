@@ -1,0 +1,8 @@
+# The seeded SQLite fixtures (development.sqlite + test.sqlite) ARE committed
+# on purpose so the benchmark runs on any engine without a migration step.
+# Only the transient SQLite sidecar files are ignored.
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+*-wal
+*-shm

@@ -78,7 +78,7 @@ Engine notes:
   `bench/bench.sh ... boxlang`.
 - **RustCFML** — see below.
 
-## RustCFML (for Alex)
+## RustCFML
 
 This app is **pristine stock Wheels on SQLite** — the same shape proven to run full CRUD on
 stock RustCFML. To benchmark it:
